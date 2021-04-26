@@ -4,10 +4,24 @@ import os
 import time
 import datetime
 
-os.environ["firstCheck"] = "True"
-os.environ["WEBHOOK_URL"] = ""
-users = [""]
-os.environ["TIME_INTERVAL"] = "300"
+# Get users from users.txt :
+my_file = open("users.txt", "r")
+users = my_file.read()
+my_file.close()
+users = users[1:]
+users = users [:-1]
+users = users.split(",")
+i = 0
+for user in users:
+    user = user.replace('"', "")
+    user = user.replace(" ", "")
+    users[i] = user
+    i = i + 1
+
+firstCheck = True
+WEBHOOK_URL = "" # Put your webhook URL here
+TIME_INTERVAL = "300"
+LAST_IMAGE_ID = {}
 
 def get_profile_picture(html):
     return html.json()["graphql"]["user"]["profile_pic_url_hd"]
@@ -35,7 +49,7 @@ def get_embed(html, selector):
     embed["image"] = {"url": html.json()["graphql"]["user"]["edge_owner_to_timeline_media"]["edges"][selector]["node"]["thumbnail_src"]}
     embed["author"] = {"name":f"@{INSTAGRAM_USERNAME} (from Instagram)", "url":f"https://instagram.com/{INSTAGRAM_USERNAME}/", "icon_url":get_profile_picture(html)}
     dt_object = datetime.datetime.fromtimestamp(html.json()["graphql"]["user"]["edge_owner_to_timeline_media"]["edges"][selector]["node"]["taken_at_timestamp"])
-    time = dt_object.strftime("%m/%d at %H:%M")
+    time = dt_object.strftime("%m/%d at %I:%M %p")
     embed["footer"] = {"text": "• " + time + " (UTC Time)", "icon_url": "https://i.imgur.com/TqD7E3m.png"}
     return embed
 
@@ -76,10 +90,10 @@ def get_instagram_html(INSTAGRAM_USERNAME):
 def main():
     try:
         html = get_instagram_html(INSTAGRAM_USERNAME)
-        if(os.environ["firstCheck"] == "True"):
+        if(firstCheck == True):
             print("First check, skipping the post")
-            os.environ[f"LAST_IMAGE_ID_{INSTAGRAM_USERNAME}"] = get_last_publication_url(html)
-        elif(os.environ.get(f"LAST_IMAGE_ID_{INSTAGRAM_USERNAME}") == get_last_publication_url(html)):
+            LAST_IMAGE_ID[INSTAGRAM_USERNAME] = get_last_publication_url(html)
+        elif(LAST_IMAGE_ID[INSTAGRAM_USERNAME] == get_last_publication_url(html)):
             print("Not new image to post in discord.")
         else:
             print("New image to post in discord.")
@@ -88,7 +102,7 @@ def main():
             for id_post in html.json()["graphql"]["user"]["edge_owner_to_timeline_media"]["edges"]:
                 id_post = id_post["node"]["shortcode"]
                 if(delete == True):
-                    if(id_post == os.environ[f"LAST_IMAGE_ID_{INSTAGRAM_USERNAME}"]):
+                    if(id_post == LAST_IMAGE_ID[INSTAGRAM_USERNAME]):
                         delete = False
                     else:
                         delete = True
@@ -96,11 +110,11 @@ def main():
                     pass
             for post in html.json()["graphql"]["user"]["edge_owner_to_timeline_media"]["edges"]:
                 post = post["node"]["shortcode"]
-                if(post == os.environ[f"LAST_IMAGE_ID_{INSTAGRAM_USERNAME}"] or delete == True):
-                    os.environ[f"LAST_IMAGE_ID_{INSTAGRAM_USERNAME}"] = get_last_publication_url(html)
+                if(post == LAST_IMAGE_ID[INSTAGRAM_USERNAME] or delete == True):
+                    LAST_IMAGE_ID[INSTAGRAM_USERNAME] = get_last_publication_url(html)
                     return
                 else:
-                    webhook(os.environ.get("WEBHOOK_URL"), get_instagram_html(INSTAGRAM_USERNAME), i)
+                    webhook(WEBHOOK_URL, get_instagram_html(INSTAGRAM_USERNAME), i)
                     i = i + 1
 
     except Exception as e:
@@ -108,13 +122,13 @@ def main():
 
 
 if __name__ == "__main__":
-    if os.environ.get('WEBHOOK_URL') != None:
+    if WEBHOOK_URL != None:
         while True:
             for user in users:
                 INSTAGRAM_USERNAME = user
                 main()
-            if(os.environ["firstCheck"] == "True"):
-                os.environ["firstCheck"] = "False"
-            time.sleep(float(os.environ.get('TIME_INTERVAL') or 300))
+            if(firstCheck == True):
+                firstCheck = False
+            time.sleep(float(TIME_INTERVAL or 300))
     else:
-        print('Please configure environment variables properly!')
+        print('Please configure requirements variables properly!')

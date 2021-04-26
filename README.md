@@ -10,14 +10,13 @@ This script executes 3 actions:
 <p>
 
 - Add multi-user support
+- File support
 - Improved embed
 - Bypass instagram's anti-bot security
 - Sends all the photos and videos that have been published during the interval (example: if the user sends 3 photos in the same minute, the bot will send the 3 photos)
 - Detection of a video
 - Ignore the 1st verification
-- Reduction of the verification interval
-- Removal of useless dependencies
-- Minor changes (optimization of functions, deletion of comments, ...)
+- Minor changes (optimization of functions, removal of comments, useless dependencies and environment variables, reduction of the verification interval, ...)
 </p>
 </details>
 
@@ -28,11 +27,14 @@ This script executes 3 actions:
 
 ## Usage:
 
-Environment Variables:
+Variable settings:
 
-- Set IG_USERNAME to username account you want to monitor. Example: ladygaga
-- Set WEBHOOK_URL to Discord account webhook url. To know how, just Google: "how to create webhook discord".
-- Set TIME_INTERVAL to the time in seconds in between each check for a new post. Example: 1.5, 600 (default=300)
+- In the "users.txt" file : 
+    - Put the usernames of all the Instagram accounts you want to monitor (respect the list formatting)
+
+- In the script : 
+    - Set WEBHOOK_URL to Discord Webhook URL. To know how, just Google: "how to create webhook discord".
+    - Set TIME_INTERVAL to the time in seconds in between each check for a new post. Example: 1.5, 600 (default=300)
 
 ## Collaborations:
 
